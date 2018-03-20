@@ -5,6 +5,8 @@ import os
 import numpy as np
 from scipy.special import expit
 
+file_path = os.path.join(os.path.sep, 'Users', 'student', 'GitHub', 'bmi203_final')
+
 # seqs = dataset
 # y = class membership of each seq
 
@@ -12,26 +14,21 @@ def training_data():
     """
     read in the training data
     """
-    print('oh wow')
+    seqs = []
+    classes  = []
+    seqname = 'training_sets.txt'
+    classname = 'training_class.txt'
 
-def to_binary(seqs):
-    """
-    takes in list of sequences, returns list of sequences in binary
-    """
-    bin_dict = dict()
-    bin_dict["A"] = "1000"
-    bin_dict["C"] = "0100"
-    bin_dict["G"] = "0010"
-    bin_dict["T"] = "0001"
+    with open(os.path.join(file_path, seqname)) as f:
+        for line in f:
+            seqs.append(line.strip())
 
-    bin_seqs = []
-    for seq in seqs:
-        bin_seq = ""
-        for char in seq:
-            bin_seq += bin_dict[char]
-        bin_seqs.append(bin_seq)
+    with open(os.path.join(file_path, classname)) as f:
+        for line in f:
+            classes.append(line.strip())
 
-    return bin_seqs
+    return (string_to_array(seqs), np.asarray(classes, dtype=int))
+
 
 def string_to_array(binary_strings):
     rows = len(binary_strings)
@@ -42,17 +39,18 @@ def string_to_array(binary_strings):
     for i, seq in enumerate(binary_strings):
         for j, char in enumerate(seq):
             seq_array[i, j] = int(char)
-    print(seq_array)
+
     return seq_array
 
 
 ## GLOBAL PARAMETERS
-test = ['0001', '0001', '0010']
-seqs = string_to_array(test)
-y = [1, 0, 0]
+#test = ['0001', '0001', '0010']
+seqs, y = training_data()
+
+
 
 # model size
-input_dim = 4 # (length, in binary, of strings: number of columns in seqs)
+input_dim = 68 # (length, in binary, of strings: number of columns in seqs)
 output_dim = 2
 example_ct = len(seqs) 
 
@@ -115,7 +113,7 @@ def model_build(nodes_in_hidden, passes):
     input: number of nodes in hidden layer, # of passes through for grd descent
     output: model (list of parameters)
     """
-    
+    #seqs, y = training_data
 
     np.random.seed(100)
     w1 = np.random.randn(input_dim, nodes_in_hidden) / np.sqrt(input_dim)
@@ -126,6 +124,8 @@ def model_build(nodes_in_hidden, passes):
     model = dict()  # dictionary to hold the parameters
 
     for i in range(0, passes):
+        print(b1.shape)
+        print(i)
         z1 = seqs.dot(w1) + b1
         a1 = expit(z1)
         z2 = a1.dot(w2) + b2
