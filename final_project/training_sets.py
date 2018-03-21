@@ -3,6 +3,7 @@
 import os
 import sys
 from Bio import SeqIO
+from Bio.Seq import Seq
 
 
 file_path = os.path.join(os.path.sep, 'Users', 'student', 'GitHub', 'bmi203_final')
@@ -26,6 +27,17 @@ def to_binary(seqs):
 
     return bin_seqs
 
+
+def rev_complement(seqs):
+    reverse_set = set()
+    for item in seqs:
+        tmp = Seq(item)
+        reverse_set.add(tmp.reverse_complement)
+    return reverse_set
+
+
+
+
 def read_pos():
     # read in the positive example file
     filename = 'rap1-lieb-positives.txt'
@@ -48,17 +60,21 @@ def read_neg(pos):
     for item in records:
         neg_seqs.append(item.seq)
 
+    pos_rev = rev_complement(pos_set)
+    positives = pos_set.union(pos_rev)
+
     # remove any examples containing a positive example
     neg_set = set()
     for seq in neg_seqs:
         for i in range(len(seq) - 16):
             new_seq = seq[i:i + 17]
-            if new_seq not in pos_set:
+            if new_seq not in positives:
                 neg_set.add(seq[i:i + 17])
-        if len(neg_set) > 100000:  # remove this if we want everything: 2982679
+        if len(neg_set) > 1000:  # remove this if we want everything: 2982679
             break
 
-    return neg_seqs
+
+    return list(neg_set)
 
 
 
@@ -68,9 +84,11 @@ def write_output(pos, neg):
     num_neg = [0]*len(neg)
     classes = num_pos + num_neg
 
+    seqs = pos + neg
+
     with open(os.path.join(file_path, "training_sets.txt"), 'w+') as outset:
         # write the sets
-        print('ok')
+        outset.write('\n'.join(x for x in seqs))
 
     with open(os.path.join(file_path, "training_class.txt"), 'w+') as outclass:
         # write the class membership
