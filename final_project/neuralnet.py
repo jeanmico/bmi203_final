@@ -4,6 +4,7 @@
 import os
 import numpy as np
 from scipy.special import expit
+import sklearn.metrics as metrics
 
 file_path = os.path.join(os.path.sep, 'Users', 'student', 'GitHub', 'bmi203_final')
 
@@ -14,20 +15,20 @@ def training_data():
     """
     read in the training data
     """
-    seqs = []
+    sequences = []
     classes  = []
     seqname = 'training_sets.txt'
     classname = 'training_class.txt'
 
     with open(os.path.join(file_path, seqname)) as f:
         for line in f:
-            seqs.append(line.strip())
+            sequences.append(line.strip())
 
     with open(os.path.join(file_path, classname)) as f:
         for line in f:
             classes.append(line.strip())
 
-    return (string_to_array(seqs), np.asarray(classes, dtype=int))
+    return (string_to_array(sequences), np.asarray(classes, dtype=int))
 
 
 def string_to_array(binary_strings):
@@ -104,7 +105,16 @@ def class_predict(model, seq):
     z2 = a1.dot(w2) + b2
     exp_scores= np.exp(z2)
     probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
-    return np.argmax(probs, axis=1)
+    #return np.argmax(probs, axis=1)
+    #return np.argmax(probs)
+    if np.argmax(probs)==0:
+        return 1 - np.max(probs)
+    else:
+        return np.max(probs)
+
+def roc_score(true_scores, model_output):
+    roc = metrics.roc_auc_score(true_scores, model_output)
+    return roc
 
 
 def model_build(nodes_in_hidden, passes):
@@ -124,8 +134,6 @@ def model_build(nodes_in_hidden, passes):
     model = dict()  # dictionary to hold the parameters
 
     for i in range(0, passes):
-        print(b1.shape)
-        print(i)
         z1 = seqs.dot(w1) + b1
         a1 = expit(z1)
         z2 = a1.dot(w2) + b2
@@ -158,7 +166,20 @@ def model_build(nodes_in_hidden, passes):
 
 def neural_net():
     # build and train the model
-    print(model_build(3, 20))
+    hidden_nodes = 68
+    passes = 20000
+    model = model_build(hidden_nodes, passes)
+
+    model_output = []
+    for i in seqs:
+        model_output.append(class_predict(model, i))
+    
+    roc = roc_score(y, np.asarray(model_output, dtype=float))
+    print(roc)
+
+    with open(os.path.join(file_path, "tracking.txt"), 'a') as output:
+        output.write('\n' + str(hidden_nodes) + ' ' + str(passes) + ' ' + str(roc))
+
 
 
 
