@@ -1,4 +1,5 @@
 import numpy as np
+import os
 
 
 def to_binary(seqs):
@@ -35,3 +36,23 @@ def string_to_array(binary_strings):
             seq_array[i, j] = int(char)
 
     return seq_array
+
+
+def training_data(file_path, filename, class_size):
+    """
+    read in the training data
+    """
+    sequences = []
+    classes  = []
+
+    with open(os.path.join(file_path, filename)) as f:
+        for line in f:
+            l = line.strip()
+            classes.append(l[:class_size])
+            sequences.append(l[class_size:])
+
+    return (string_to_array(sequences), string_to_array(classes))
+
+
+
+
