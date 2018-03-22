@@ -80,9 +80,13 @@ def read_neg(pos):
 
 def write_output(pos, neg):
     #write output files
-    num_pos = [1]*len(pos)
-    num_neg = [0]*len(neg)
-    classes = num_pos + num_neg
+    num_pos = len(pos)
+    num_neg = len(neg)
+    classes = []
+    for i in range(num_pos):
+        classes.append([0,1])
+    for i in range(num_neg):
+        classes.append([1,0])
 
     seqs = pos + neg
 
@@ -92,7 +96,7 @@ def write_output(pos, neg):
 
     with open(os.path.join(file_path, "training_class.txt"), 'w+') as outclass:
         # write the class membership
-        outclass.write('\n'.join(str(x) for x in classes))
+        outclass.write('\n'.join('\t'.join(str(x) for x in item) for item in classes))
 
 
 
