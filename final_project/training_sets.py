@@ -2,30 +2,12 @@
 
 import os
 import sys
+import utils
 from Bio import SeqIO
 from Bio.Seq import Seq
 
 
 file_path = os.path.join(os.path.sep, 'Users', 'student', 'GitHub', 'bmi203_final')
-
-def to_binary(seqs):
-    """
-    takes in list of sequences, returns list of sequences in binary
-    """
-    bin_dict = dict()
-    bin_dict["A"] = "1000"
-    bin_dict["C"] = "0100"
-    bin_dict["G"] = "0010"
-    bin_dict["T"] = "0001"
-
-    bin_seqs = []
-    for seq in seqs:
-        bin_seq = ""
-        for char in seq:
-            bin_seq += bin_dict[char]
-        bin_seqs.append(bin_seq)
-
-    return bin_seqs
 
 
 def rev_complement(seqs):
@@ -70,8 +52,6 @@ def read_neg(pos):
             new_seq = seq[i:i + 17]
             if new_seq not in positives:
                 neg_set.add(seq[i:i + 17])
-        if len(neg_set) > 1000:  # remove this if we want everything: 2982679
-            break
 
 
     return list(neg_set)
@@ -80,23 +60,15 @@ def read_neg(pos):
 
 def write_output(pos, neg):
     #write output files
-    num_pos = len(pos)
-    num_neg = len(neg)
-    classes = []
-    for i in range(num_pos):
-        classes.append([0,1])
-    for i in range(num_neg):
-        classes.append([1,0])
-
     seqs = pos + neg
 
-    with open(os.path.join(file_path, "training_sets.txt"), 'w+') as outset:
+    with open(os.path.join(file_path, "training_pos.txt"), 'w+') as outset:
         # write the sets
-        outset.write('\n'.join(x for x in seqs))
+        outset.write('\n'.join(x for x in pos))
 
-    with open(os.path.join(file_path, "training_class.txt"), 'w+') as outclass:
-        # write the class membership
-        outclass.write('\n'.join('\t'.join(str(x) for x in item) for item in classes))
+    with open(os.path.join(file_path, "training_neg.txt"), 'w+') as outset:
+        # write the sets
+        outset.write('\n'.join(x for x in neg))
 
 
 
@@ -106,9 +78,10 @@ def training_sets():
     pos_seqs = read_pos()
     neg_seqs = read_neg(pos_seqs)
 
-    pos_seqs = to_binary(pos_seqs)
-    neg_seqs = to_binary(neg_seqs)
-
+    pos_seqs = utils.to_binary(pos_seqs)
+    neg_seqs = utils.to_binary(neg_seqs)
+    pos_seqs = ['01' + x for x in pos_seqs]
+    neg_seqs = ['10' + x for x in neg_seqs]
 
     write_output(pos_seqs, neg_seqs)
 
