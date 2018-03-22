@@ -1,10 +1,16 @@
 # implements a neural network
 
+#TODO:
+# output model
+# run model on test data
+# gradient descent with backpropagation
 
+import sys
 import os
 import numpy as np
 from scipy.special import expit
 import sklearn.metrics as metrics
+
 
 file_path = os.path.join(os.path.sep, 'Users', 'student', 'GitHub', 'bmi203_final')
 
@@ -54,23 +60,19 @@ def string_to_array(binary_strings):
 ## GLOBAL PARAMETERS
 seqs, y = training_data()
 
-# model size
-input_dim = 68 # (length, in binary, of strings: number of columns in seqs)
-output_dim = 2
-
 #seqs = np.identity(8)
 #y = np.identity(8)
-#print(y.shape)
-#print(type(y))
 
-example_ct = len(seqs) 
+# model size
+example_ct = len(seqs)
+input_dim = len(seqs[0]) # (length, in binary, of strings: number of columns in seqs)
+output_dim = 2
 
 #input_dim = 8
 #output_dim = 8
 
 # gradient descent params
-epsilon = 0.01
-lambda_reg = 0.01
+epsilon = 0.01  # learning rate for gradient descent
 
 
 def activation(x):
@@ -81,35 +83,11 @@ def activation(x):
 
 
 
-def model_math(model):
-    w1, b1, w2, b2 = model['w1'], model['b1'], model['w2'], model['b2']
-
-    #forward propagation
-
-    z1 = x.dot(w1) + b1
-    a1 = expit(z1)  # sigmoid function
-    z2 = a1.dot(w2) + b2
-    exp_scores= np.exp(z2)
-    probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
-
-
 def loss_compute(model):
     """
     determines performance of model
     """
-    w1, b1, w2, b2 = model['w1'], model['b1'], model['w2'], model['b2']
-    z1 = seq.dot(w1) + b1
-    a1 = expit(z1)  # sigmoid function
-    z2 = a1.dot(w2) + b2
-    exp_scores= np.exp(z2)
-    probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
 
-    # calculating the loss
-    data_loss = np.sum(-1*np.log(procs[range(example_ct), y]))
-
-    # adding the regularization term (optional)
-    data_loss += lambda_reg/2 * (np.sum(np.square(w1))) + np.sum(np.square(w2))
-    return 1./example_ct * data_loss
 
 
 def class_predict(model, seq):
@@ -117,7 +95,20 @@ def class_predict(model, seq):
     classifies input as true binding site or not (1 or 0)
     """
 
+    # forward propagation
+    w1 = model['w1']
+    w2 = model['w2']
 
+    l1 = activation(np.dot(seq, w1))
+
+    l2 = activation(np.dot(l1, w2))
+
+    # return output as a single number
+    max_arg = np.argmax(l2)
+    if max_arg == 0:
+        return (1 - l2[max_arg])
+    else:
+        return l2[max_arg]
 
 def roc_score(true_scores, model_output):
     true_scores_flat = []
@@ -156,14 +147,14 @@ def model_build(nodes_in_hidden, passes):
     w2 = 2*np.random.randn(nodes_in_hidden, output_dim) - 1 # from hidden to output
     model = dict()  # dictionary to hold the parameters
 
+    errors = []
+
+    # in each pass, we try to learn our weight parameters better
     for i in range(passes):
-        b1 = 0
-        b2 = 0
 
-
-        layer0 = seqs
-        layer1 = activation(np.dot(layer0, w1))
-        layer2 = activation(np.dot(layer1, w2))
+        layer0 = seqs  # input layer; training data
+        layer1 = activation(np.dot(layer0, w1))  # hidden layer
+        layer2 = activation(np.dot(layer1, w2))  # output layer: our prediction
 
 
         l2_error = y - layer2
@@ -174,19 +165,26 @@ def model_build(nodes_in_hidden, passes):
 
         l1_delta = l1_error*activation(layer1)
 
-        # update!
+        # update our weights
         w2 += layer1.T.dot(l2_delta)
         w1 += layer0.T.dot(l1_delta)
 
+        if i%100 == 0:
+            error = np.mean(np.abs(l2_error))
+            print(error)
+            errors.append(error)
 
-    return layer2
+    weights = dict()
+    weights['w1'] = w1
+    weights['w2'] = w2
+    return weights, layer2  # this is our output layer!
 
 
 def neural_net():
     # build and train the model
     hidden_nodes = 10
-    passes = 20000
-    model_output = model_build(hidden_nodes, passes)
+    passes = 100
+    model, model_output = model_build(hidden_nodes, passes)
 
 
     #for i in seqs:
@@ -198,6 +196,10 @@ def neural_net():
     with open(os.path.join(file_path, "tracking_rd.txt"), 'a') as output:
         output.write('\n' + str(hidden_nodes) + ' ' + str(passes) + ' ' + str(roc))
 
+    teststr = ['10000100100000010100010000100001001001001000010001000001010001000010']
+    print(string_to_array(teststr))
+    print(string_to_array(teststr).shape)
+    print(class_predict(model, string_to_array(teststr)))
 
 
 
