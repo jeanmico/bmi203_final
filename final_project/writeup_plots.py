@@ -5,29 +5,6 @@ from collections import defaultdict
 
 file_path = os.path.join(os.path.sep, 'Users', 'student', 'GitHub', 'bmi203_final')
 
-crossval_fname = 'crossval_roc.txt'
-
-crossval_pass = []
-crossval_roc = []
-with open(os.path.join(file_path, crossval_fname)) as f:
-    for line in f:
-        lineval = line.strip().split()
-        pass_num = int(lineval[0])
-        roc = float(lineval[1])
-
-        crossval_pass.append(pass_num)
-        crossval_roc.append(roc)
-
-fig, ax = plt.subplots()
-plt.scatter(crossval_pass, crossval_roc)
-ax.set_ylim(0,1)
-ax.set_ylabel('roc score')
-ax.set_xlabel('trial')
-plt.title('25 cross-validation tests')
-plt.savefig(os.path.join(file_path, 'figures/crossval.png'), dpi=300)
-
-
-
 
 lambda_dct = defaultdict(list)
 lambda_name = 'lambda_roc.txt'
@@ -54,7 +31,7 @@ plt.title('regularization optimization')
 plt.savefig(os.path.join(file_path, 'figures/lambda_reg.png'), dpi=300)
 
 
-hidden_fname = 'crossval_roc.txt'
+hidden_fname = 'hidden_roc.txt'
 
 hidden_pass = []
 hidden_roc = []
@@ -74,6 +51,31 @@ ax.set_ylabel('roc score')
 ax.set_xlabel('hidden nodes')
 plt.title('optimizing hidden nodes')
 plt.savefig(os.path.join(file_path, 'figures/hidden.png'), dpi=300)
+
+
+crossval_fname = 'crossval_roc.txt'
+
+crossval_pass = []
+crossval_roc = []
+with open(os.path.join(file_path, crossval_fname)) as f:
+    for line in f:
+        lineval = line.strip().split()
+        pass_num = int(lineval[0])
+        roc = float(lineval[1])
+
+        crossval_pass.append(pass_num)
+        crossval_roc.append(roc)
+
+fig, ax = plt.subplots()
+plt.scatter(crossval_pass, crossval_roc)
+ax.set_ylim(0,1)
+ax.set_ylabel('roc score')
+ax.set_xlabel('trial')
+plt.title('25 cross-validation tests')
+plt.savefig(os.path.join(file_path, 'figures/crossval.png'), dpi=300)
+
+
+
 
 
 
