@@ -12,28 +12,20 @@
 import sys
 import os
 import numpy as np
-import utils
+from final_project import utils
 from scipy.special import expit
 import sklearn.metrics as metrics
 
 
 file_path = os.path.join(os.path.sep, 'Users', 'student', 'GitHub', 'bmi203_final')
 teststr = ['10000100100000010100010000100001001001001000010001000001010001000010']
-# seqs = dataset
-# y = class membership of each seq
 
 ## GLOBAL PARAMETERS
 
-#seqs = np.identity(8)
-#y = np.identity(8)
-
 # model size
-output_dim = 8
+output_dim = 2
 hidden_nodes = 10
-passes = 100
-
-#input_dim = 8
-#output_dim = 8
+passes = 1000
 
 # gradient descent params
 epsilon = 0.01  # learning rate for gradient descent
@@ -157,14 +149,15 @@ def neural_net():
 
     cross_validation = False
 
-    seqs, y = utils.training_data(file_path, "838.txt", 8)
-    print(seqs)
-    print(y)
+    seqs, y = utils.training_data(file_path, "training.txt", output_dim)
 
     if not cross_validation:
         #build model using training set
         model, model_output = model_build(seqs, y, hidden_nodes, passes)
-        print(model_output)
+
+        roc = roc_score(y, np.asarray(model_output, dtype=float))
+        print(roc)
+
 
     else:
         #subset your data for cross-validation
@@ -178,7 +171,3 @@ def neural_net():
             with open(os.path.join(file_path, "tracking_cv.txt"), 'a') as output:
                 output.write('\n' + str(hidden_nodes) + ' ' + str(passes) + ' ' + str(roc))
 
-
-
-if __name__ == "__main__":
-    neural_net()
