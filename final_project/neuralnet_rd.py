@@ -1,14 +1,12 @@
 # implements a neural network
-
-#TODO
-# really gorgeous comments!
+# operations are performed matrix-wise to reduce computation time
 
 import sys
 import os
 import numpy as np
 from final_project import utils
 from scipy.special import expit
-import sklearn.metrics as metrics
+import sklearn.metrics as metrics  # used this only for auroc calculations
 import random
 import math
 
@@ -16,18 +14,55 @@ import math
 file_path = os.path.join(os.path.sep, 'Users', 'student', 'GitHub', 'bmi203_final')
 
 ## GLOBAL PARAMETERS
-
 # model size
 output_dim = 2
-hidden_nodes = 10
-passes = 1000
+hidden_nodes = 12
+passes = 10000
 
-# gradient descent params
-epsilon = .1  # learning rate for gradient descent
+# other parameters
+epsilon = .01 # learning rate for gradient descent
 lambda_reg = .1  #regularization term
 
 
+def make_predictions(model):
+    """
+    reads in the test set and outputs the predictions.txt file
+    """
+
+    pred_seq = []
+    pred_arr = []
+
+    with open(os.path.join(file_path, 'rap1-lieb-test.txt')) as f:
+        for line in f:
+            tmpseq = line.strip()
+            bin_seq = utils.to_binary([tmpseq])
+
+            pred_seq.append(tmpseq)
+            pred_arr.append(bin_seq[0])
+
+    pred_arr =  utils.string_to_array(pred_arr)
+
+    prediction = class_predict(model, pred_arr)
+
+    with open(os.path.join(file_path, 'predictions.txt'), 'w+') as outfile:
+        for i, test_sequence in enumerate(pred_seq):
+            outfile.write(test_sequence + '\t' + str(prediction[i]) + '\n')
+
+
 def crossval_sets(pos_ind, neg_ind, seqs, classes):
+    """
+    generates datasets for crossvalidation
+    takes in:
+     a list of indices of positive examples in seqs
+     a list of indices of negative examples of seqs
+     the sequences
+     the classes
+    outputs:
+     training sequences
+     training classes
+     testing sequences
+     testing classes
+    """
     testsize = .75
 
     random.shuffle(pos_ind)
@@ -84,7 +119,7 @@ def crossval(seqs, y):
 
 def activation(x, deriv=False):
     """
-    sigmoid function
+    sigmoid function with derivative
     """
     sigmoid_out = 1/(1 + np.exp(-x))
     if deriv:
@@ -109,15 +144,19 @@ def class_predict(model, test_seqs, roc=False):
     predictions = []
     # return output as a single number
     for output in l2[:,]:
-        max_arg = np.argmax(l2)
+        max_arg = np.argmax(output)
         if max_arg == 0:
-            predictions.append(1 - l2[max_arg])
+            predictions.append(1 - output[max_arg])
         else:
-            predictions.append(l2[max_arg])
+            predictions.append(output[max_arg])
     return predictions
 
 
 def roc_score(true_scores, model_output):
+    """
+    takes in true scores, model output (array)
+    returns AUROC
+    """
     true_scores_flat = []
     for score in true_scores[:,]:
         true_scores_flat.append(np.argmax(score))
@@ -148,7 +187,7 @@ def model_build(seqs, y, nodes_in_hidden, passes):
     w2 = 2*np.random.randn(nodes_in_hidden, output_dim) - 1 # from hidden to output
     model = dict()  # dictionary to hold the parameters
 
-    errors = []
+    errors = []  # track the loss of the model
 
     # in each pass, we try to learn our weight parameters better
     for i in range(passes):
@@ -160,41 +199,33 @@ def model_build(seqs, y, nodes_in_hidden, passes):
 
         l2_error = y - layer2
         l2_delta = l2_error*activation(layer2)
-        l1_error = l2_delta.dot(w2.T)  # this is the backpropagation step!!
+        l1_error = l2_delta.dot(w2.T)  # this is the backpropagation step
         l1_delta = l1_error*activation(layer1, True)
 
         # update our weights
         w2 += epsilon * (layer1.T.dot(l2_delta) + lambda_reg*w2)
         w1 += epsilon * (layer0.T.dot(l1_delta) + lambda_reg*w1)
 
-        if i%100 == 0:
+        if i%500 == 0:  # for performance, only compute every x iterations
             error = np.mean(np.abs(l2_error))
-            #print(error)
             errors.append(error)
 
-    model['w1'] = w1
+    model['w1'] = w1  # update the model dictionary
     model['w2'] = w2
-    return model, layer2  # this is our output layer!
+    return model, layer2, errors  # this is our output layer!
 
 
 def neural_net():
     # build and train the model
-
     cross_validation = False
 
     seqs, y = utils.training_data(file_path, "training.txt", output_dim)
-
     if not cross_validation:
         #build model using training set
-        model, model_output = model_build(seqs, y, hidden_nodes, passes)
-
-        roc = roc_score(y, np.asarray(model_output, dtype=float))
-        print(roc)
-
+        model, model_output, errors = model_build(seqs, y, hidden_nodes, passes)
 
     else:
-
-        #subset your data for cross-validation
+        #subset data for cross-validation
         master_seqs, master_class = utils.training_data(file_path, "training.txt", output_dim)
         pos_ind, neg_ind = crossval(master_seqs, master_class)
 
@@ -203,7 +234,7 @@ def neural_net():
 
         for j in range(25):
             seqs, y, seq_test, y_test = crossval_sets(pos_ind, neg_ind, master_seqs, master_class)
-            model, model_output = model_build(seqs, y, hidden_nodes, passes)
+            model, model_output, errors = model_build(seqs, y, hidden_nodes, passes)
             
             predictions = class_predict(model, seq_test, True)
             roc = roc_score(y_test, np.asarray(predictions, dtype=float))
@@ -211,4 +242,8 @@ def neural_net():
 
             with open(os.path.join(file_path, "crossval_roc.txt"), 'a') as output:
                 output.write('\n' + str(j) + ' ' + str(roc))
+
+    make_predictions(model)
+
+
 
