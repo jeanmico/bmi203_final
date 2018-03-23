@@ -45,15 +45,25 @@ def string_to_array(binary_strings):
 
 
 ## GLOBAL PARAMETERS
-#test = ['0001', '0001', '0010']
-seqs, y = training_data()
+
+#seqs, y = training_data()
 
 
 
 # model size
-input_dim = 68 # (length, in binary, of strings: number of columns in seqs)
-output_dim = 2
+#input_dim = 68 # (length, in binary, of strings: number of columns in seqs)
+#output_dim = 2
+#example_ct = len(seqs) 
+
+seqs = np.identity(8)
+y = np.identity(8)
+print(y.shape)
+print(type(y))
+
 example_ct = len(seqs) 
+
+input_dim = 8
+output_dim = 8
 
 # gradient descent params
 epsilon = 0.01
@@ -116,6 +126,12 @@ def roc_score(true_scores, model_output):
     roc = metrics.roc_auc_score(true_scores, model_output)
     return roc
 
+def backprop(net, seq, y):
+    """
+
+    """
+    print('ok')
+
 
 def model_build(nodes_in_hidden, passes):
     """
@@ -123,9 +139,9 @@ def model_build(nodes_in_hidden, passes):
     input: number of nodes in hidden layer, # of passes through for grd descent
     output: model (list of parameters)
     """
-    #seqs, y = training_data
 
     np.random.seed(100)
+
     w1 = np.random.randn(input_dim, nodes_in_hidden) / np.sqrt(input_dim)
     b1 = np.zeros((1, nodes_in_hidden))
     w2 = np.random.randn(nodes_in_hidden, output_dim) / np.sqrt(nodes_in_hidden)
@@ -142,6 +158,8 @@ def model_build(nodes_in_hidden, passes):
 
         # backpropagation
         delta3 = probs
+        print(range(example_ct))
+        print(y.shape)
         delta3[range(example_ct), y] -= 1
         dw2 = (a1.T).dot(delta3)
         db2 = np.sum(delta3, axis=0, keepdims=True)
@@ -166,8 +184,8 @@ def model_build(nodes_in_hidden, passes):
 
 def neural_net():
     # build and train the model
-    hidden_nodes = 68
-    passes = 20000
+    hidden_nodes = 10
+    passes = 200
     model = model_build(hidden_nodes, passes)
 
     model_output = []
