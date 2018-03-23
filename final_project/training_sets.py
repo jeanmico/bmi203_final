@@ -2,7 +2,7 @@
 
 import os
 import sys
-import utils
+from final_project import utils
 from Bio import SeqIO
 from Bio.Seq import Seq
 import numpy as np
